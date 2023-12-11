@@ -22,9 +22,13 @@ const ImageSelector: React.FC<ImageSelectorProps> = ({ onImageSelect }) => {
   };
 
   return (
-    <div>
-      <label htmlFor="imageInput">Please, choose an image: </label>
-      <input type="file" id="imageInput" accept="image/*" onChange={handleImageChange} />
+    <div className='flex flex-row'>
+      {/* <label htmlFor="imageInput">Please, choose an image: </label>
+      <input type="file" id="imageInput" accept="image/*" onChange={handleImageChange} /> */}
+      <label htmlFor="tileInput">Please, also input tile amount: </label>
+      <input type="number" id="tileInput"   />
+
+
     </div>
   );
 };
