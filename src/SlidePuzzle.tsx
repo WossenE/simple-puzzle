@@ -1,6 +1,8 @@
-import { CSSProperties, useEffect, useReducer, useRef, useState } from 'react';
-import Tile from './Tile';
-import { actions, ActionType } from './Actions';
+// @ts-nocheck
+import { CSSProperties, useEffect, useReducer, useRef, useState } from "react";
+import Tile from "./Tile";
+import { actions, ActionType } from "./Actions";
+import DraggableWrapper from "./DraggableWrapper";
 
 type TileDataType = {
   value: number | null;
@@ -11,14 +13,6 @@ type GameStateType = {
   numRowsCols: number;
   numOfMoves: number;
   tilesData: TileDataType[][] | null;
-};
-
-const initialGameState = {
-  numRowsCols: 4,
-  imageUrl: '',
-  imageWidth: 0,
-  numOfMoves: 0,
-  tilesData: null,
 };
 
 // Define the reducer function
@@ -35,7 +29,7 @@ const reducer = (state: GameStateType, action: ActionType): GameStateType => {
           state.tilesData,
           action.payload.row,
           action.payload.col,
-          state.numRowsCols,
+          state.numRowsCols
         ),
       }; // TODO
     case actions.RANDOMIZE_TILES:
@@ -55,7 +49,7 @@ const generateSoftColor = () => {
   const blue = Math.floor(Math.random() * 156 + 80);
 
   const hexColor = `#${red.toString(16)}${green.toString(16)}${blue.toString(
-    16,
+    16
   )}`;
 
   return hexColor;
@@ -69,16 +63,15 @@ const createTilesData = (numRowsCols: number) => {
   for (let row = 0; row < numRowsCols; row += 1) {
     for (let col = 0; col < numRowsCols; col += 1) {
       tilesData[row][col] = {
-        value: row * numRowsCols + col,
+        value: row * numRowsCols + col + 1,
         color: generateSoftColor(),
       };
     }
   }
 
-
   // The last tile should be empty
   tilesData[numRowsCols - 1][numRowsCols - 1].value = null;
-  tilesData[numRowsCols - 1][numRowsCols - 1].color = '#fff';
+  tilesData[numRowsCols - 1][numRowsCols - 1].color = "#fff";
 
   return tilesData;
 };
@@ -90,15 +83,8 @@ const copyTilesData = (tilesData: TileDataType[][]) => {
   return newTilesData;
 };
 
-const randomizeTiles = (
-  tilesData: TileDataType[][] | null,
-  numRowsCols: number,
-) => {
-  if (!tilesData) {
-    return null;
-  }
-
-  const randArr = new Array(numRowsCols * numRowsCols - 1)
+const getRandArr = (length: number) => {
+  const randArr = new Array(length * length - 1)
     .fill(null)
     .map((_, idx) => idx + 1);
   for (let i = 0; i < randArr.length; i += 1) {
@@ -107,6 +93,51 @@ const randomizeTiles = (
     const temp = randArr[randIdx];
     randArr[randIdx] = randArr[i];
     randArr[i] = temp;
+  }
+
+  return randArr;
+};
+
+const isSolvable = (arr: number[], numRowsCols: number) => {
+  const numInversions = countInversions(arr);
+  // if
+  return (numInversions + numRowsCols) % 2 === 0;
+};
+
+const countInversions = (arr: number[]) => {
+  let numInversions = 0;
+
+  for (let i = 0; i < arr.length; i += 1) {
+    for (let j = i + 1; j < arr.length; j += 1) {
+      if (arr[j] < arr[i]) {
+        numInversions += 1;
+      }
+    }
+  }
+
+  return numInversions;
+};
+
+const randomizeTiles = (
+  tilesData: TileDataType[][] | null,
+  numRowsCols: number
+) => {
+  if (!tilesData) {
+    return null;
+  }
+
+  let randArr = getRandArr(numRowsCols);
+  // An example that is not solvable
+  // const randArr =  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 13, 14, 12];
+
+  while (!isSolvable(randArr, numRowsCols)) {
+    randArr = getRandArr(numRowsCols);
+  }
+
+  if (isSolvable(randArr, numRowsCols)) {
+    console.log("this is solvable");
+  } else {
+    console.log("this is not solvable");
   }
 
   const tilesDataCopy = copyTilesData(tilesData);
@@ -127,7 +158,7 @@ const randomizeTiles = (
 
 const getValidNeighbors = (
   { row, col }: { row: number; col: number },
-  numRowsCols: number,
+  numRowsCols: number
 ) => {
   const neighbors = [
     [row, col - 1],
@@ -136,15 +167,11 @@ const getValidNeighbors = (
     [row + 1, col],
   ];
 
-  const validNeighbors = neighbors
-    .filter(([rowIdx, colIdx]) => {
-      return (
-        0 <= rowIdx &&
-        rowIdx < numRowsCols &&
-        0 <= colIdx &&
-        colIdx < numRowsCols
-      );
-    })
+  const validNeighbors = neighbors.filter(([rowIdx, colIdx]) => {
+    return (
+      0 <= rowIdx && rowIdx < numRowsCols && 0 <= colIdx && colIdx < numRowsCols
+    );
+  });
 
   return validNeighbors;
 };
@@ -153,18 +180,20 @@ const moveTile = (
   tilesData: TileDataType[][] | null,
   row: number,
   col: number,
-  numRowsCols: number,
+  numRowsCols: number
 ) => {
   if (!tilesData) {
     return null;
   }
 
-  const neighbors = getValidNeighbors( { row, col }, numRowsCols);
-  const emptyTileIndices = neighbors.filter(([row, col]) => tilesData[row][col].value === null)[0];
-  console.log(`emptyTileIndices ${JSON.stringify(emptyTileIndices)}`)
+  const neighbors = getValidNeighbors({ row, col }, numRowsCols);
+  const emptyTileIndices = neighbors.filter(
+    ([row, col]) => tilesData[row][col].value === null
+  )[0];
+  console.log(`emptyTileIndices ${JSON.stringify(emptyTileIndices)}`);
 
   if (emptyTileIndices === undefined) {
-    console.log('Does NOT have empty neighbor');
+    console.log("Does NOT have empty neighbor");
     return tilesData;
   }
 
@@ -180,12 +209,19 @@ const moveTile = (
   tilesData[emptyTileRow][emptyTileCol] = tilesData[row][col];
   tilesData[row][col] = temp;
 
-  
   return tilesDataCopy;
 };
 
 // ******
-function SlidePuzzle() {
+function SlidePuzzle({ rowsCols }) {
+  const initialGameState = {
+    numRowsCols: rowsCols,
+    imageUrl: "",
+    imageWidth: 0,
+    numOfMoves: 0,
+    tilesData: null,
+  };
+
   const [gameState, dispatch] = useReducer(reducer, initialGameState);
   const puzzleGridRef = useRef<HTMLDivElement | null>(null);
   const [gridWidth, setGridWidth] = useState(0);
@@ -197,57 +233,59 @@ function SlidePuzzle() {
       }
     };
 
-    window.addEventListener('resize', updateGridWidth);
+    window.addEventListener("resize", updateGridWidth);
 
     if (puzzleGridRef.current) {
       setGridWidth(puzzleGridRef.current.clientWidth);
     }
     return () => {
-      window.removeEventListener('resize', updateGridWidth);
+      window.removeEventListener("resize", updateGridWidth);
     };
   }, []);
 
   useEffect(() => {
-    dispatch({ type: 'SET_UP_TILES_DATA' });
+    dispatch({ type: "SET_UP_TILES_DATA" });
   }, []);
 
   const gridStyles: CSSProperties = {
-    display: 'grid',
+    display: "grid",
     gridTemplateRows: `repeat(${gameState.numRowsCols}, 1fr)`,
     gridTemplateColumns: `repeat(${gameState.numRowsCols}, 1fr)`,
-    width: '80vw',
-    minWidth: '24rem',
-    maxWidth: '50rem',
+    width: "80vw",
+    minWidth: "24rem",
+    maxWidth: "50rem",
     height: `${gridWidth}px`,
-    margin: '2rem auto',
-    border: '2px solid red',
+    margin: "2rem auto",
+    border: "2px solid red",
   };
 
   return (
     <div>
-      <div>
-        {gameState.tilesData && gameState.numRowsCols && (
-          <div style={gridStyles} ref={puzzleGridRef}>
-            {gameState.tilesData.map((row, rowIdx) =>
-              row.map((cell, cellIdx) => (
-                <Tile
-                  key={`tile-${cell.value}`}
-                  value={cell.value}
-                  currentPosition={{row: rowIdx, col: cellIdx}}
-                  color={cell.color}
-                  dispatch={dispatch}
-                />
-              )),
-            )}
-          </div>
-        )}
-      </div>
-      <button onClick={() => dispatch({ type: 'RANDOMIZE_TILES' })}>
-        Randomize
-      </button>
-      <div>
+      <DraggableWrapper>
+        <button onClick={() => dispatch({ type: "RANDOMIZE_TILES" })}>
+          Randomize
+        </button>
+        <div>
+          {gameState.tilesData && gameState.numRowsCols && (
+            <div style={gridStyles} ref={puzzleGridRef}>
+              {gameState.tilesData.map((row, rowIdx) =>
+                row.map((cell, cellIdx) => (
+                  <Tile
+                    key={`tile-${cell.value}`}
+                    value={cell.value}
+                    currentPosition={{ row: rowIdx, col: cellIdx }}
+                    color={cell.color}
+                    dispatch={dispatch}
+                  />
+                ))
+              )}
+            </div>
+          )}
+        </div>
+        {/* <div>
         <pre>{JSON.stringify(gameState, null, 2)}</pre>
-      </div>
+      </div> */}
+      </DraggableWrapper>
     </div>
   );
 }
