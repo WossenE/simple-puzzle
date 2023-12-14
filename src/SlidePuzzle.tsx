@@ -1,5 +1,3 @@
-//@ts-nocheck
-
 import {
   CSSProperties,
   ChangeEvent,
@@ -9,7 +7,7 @@ import {
   useRef,
 } from "react";
 
-import { actions, ActionType, GameStateType, TileDataType } from "./types";
+import { Actions, ActionType, GameStateType, TileDataType } from "./types";
 import Tile from "./Tile";
 import {
   checkIsSolved,
@@ -40,11 +38,11 @@ const reducer = (state: GameStateType, action: ActionType): GameStateType => {
       .filter((n): n is number => !!n);
 
   switch (action.type) {
-    case actions.SET_NUM_ROWS_COLS:
+    case Actions.SET_NUM_ROWS_COLS:
       return { ...state, numRowsCols: action.payload.newNumRowsCols };
-    case actions.SET_UP_TILES_DATA:
+    case Actions.SET_UP_TILES_DATA:
       return { ...state, tilesData: createTilesData(state.numRowsCols) };
-    case actions.RANDOMIZE_TILES:
+    case Actions.RANDOMIZE_TILES:
       return {
         ...state,
         isSolved: false,
@@ -54,7 +52,7 @@ const reducer = (state: GameStateType, action: ActionType): GameStateType => {
           state.excludeNonSolvablePermutations
         ),
       };
-    case actions.MOVE_TILE:
+    case Actions.MOVE_TILE:
       return {
         ...state,
         numOfMoves: state.numOfMoves + 1,
@@ -65,11 +63,11 @@ const reducer = (state: GameStateType, action: ActionType): GameStateType => {
           state.numRowsCols
         ),
       };
-    case actions.CHECK_IS_SOLEVED:
+    case Actions.CHECK_IS_SOLEVED:
       return { ...state, isSolved: checkIsSolved(state.tilesData) };
-    case actions.CHECK_IS_SOLEVABLE:
+    case Actions.CHECK_IS_SOLEVABLE:
       return { ...state, isSolvable: isSolvable(flattened, state.numRowsCols) };
-    case actions.SET_EXCLUDE_UNSOLVABLE:
+    case Actions.SET_EXCLUDE_UNSOLVABLE:
       return {
         ...state,
         excludeNonSolvablePermutations: action.payload.excludeUnsolvable,
@@ -178,17 +176,19 @@ function SlidePuzzle() {
     };
 
     window.addEventListener("resize", updateGridWidth);
+    window.addEventListener("load", updateGridWidth);
 
     if (puzzleGridRef.current) {
       setGridWidth(puzzleGridRef.current.clientWidth);
     }
     return () => {
       window.removeEventListener("resize", updateGridWidth);
+      window.removeEventListener("load", updateGridWidth);
     };
   }, []);
 
   useEffect(() => {
-    dispatch({ type: actions.SET_UP_TILES_DATA });
+    dispatch({ type: Actions.SET_UP_TILES_DATA });
   }, []);
 
   const handleBoardSizeChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -200,11 +200,11 @@ function SlidePuzzle() {
     }
 
     dispatch({
-      type: actions.SET_NUM_ROWS_COLS,
+      type: Actions.SET_NUM_ROWS_COLS,
       payload: { newNumRowsCols: newBoardSize },
     });
     dispatch({
-      type: actions.SET_UP_TILES_DATA,
+      type: Actions.SET_UP_TILES_DATA,
     });
   };
 
@@ -257,8 +257,8 @@ function SlidePuzzle() {
         </div>
         <button
           onClick={() => {
-            dispatch({ type: actions.RANDOMIZE_TILES });
-            dispatch({ type: actions.CHECK_IS_SOLEVABLE });
+            dispatch({ type: Actions.RANDOMIZE_TILES });
+            dispatch({ type: Actions.CHECK_IS_SOLEVABLE });
           }}
         >
           Reshuffle
@@ -274,7 +274,7 @@ function SlidePuzzle() {
             checked={gameState.excludeNonSolvablePermutations}
             onChange={(event) =>
               dispatch({
-                type: actions.SET_EXCLUDE_UNSOLVABLE,
+                type: Actions.SET_EXCLUDE_UNSOLVABLE,
                 payload: { excludeUnsolvable: event.target.checked },
               })
             }

@@ -1,5 +1,5 @@
 import { CSSProperties } from 'react';
-import { ActionType, actions } from './types';
+import { ActionType, Actions } from './types';
 
 type TileProps = {
   value: number | null;
@@ -37,11 +37,11 @@ const Tile: React.FC<TileProps> = ({
   const handleClick = () => {
     if (!puzzleIsSolved) {
       dispatch({
-        type: actions.MOVE_TILE,
+        type: Actions.MOVE_TILE,
         payload: { row: currentPosition.row, col: currentPosition.col },
       });
       dispatch({
-        type: actions.CHECK_IS_SOLEVED,
+        type: Actions.CHECK_IS_SOLEVED,
       });
     }
   };
